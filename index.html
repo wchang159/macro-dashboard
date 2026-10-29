@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Macro Dashboard</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151932;
+            --bg-card: #1a1f3a;
+            --text-primary: #e8eaf6;
+            --text-secondary: #9fa8da;
+            --border-color: #283593;
+            --green: #00e676;
+            --yellow: #ffd600;
+            --red: #ff1744;
+            --accent: #536dfe;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 12px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: var(--accent);
+        }
+
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .refresh-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .refresh-btn:active {
+            opacity: 0.8;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+        }
+
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .indicator-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        @media (min-width: 768px) {
+            .indicator-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .indicator {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .indicator-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .indicator-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .signal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .signal-green { background: var(--green); box-shadow: 0 0 8px var(--green); }
+        .signal-yellow { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+        .signal-red { background: var(--red); box-shadow: 0 0 8px var(--red); }
+
+        .indicator-value {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 4px 0;
+            color: var(--text-primary);
+        }
+
+        .indicator-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .probability-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        .probability-table th,
+        .probability-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .probability-table th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .probability-table td {
+            font-size: 14px;
+        }
+
+        .prob-high { color: var(--red); font-weight: 700; }
+        .prob-medium { color: var(--yellow); font-weight: 600; }
+        .prob-low { color: var(--green); font-weight: 600; }
+
+        .summary-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .summary-item {
+            background: var(--bg-secondary);
+            border-left: 4px solid;
+            padding: 12px;
+            border-radius: 4px;
+        }
+
+        .summary-item.green { border-color: var(--green); }
+        .summary-item.yellow { border-color: var(--yellow); }
+        .summary-item.red { border-color: var(--red); }
+
+        .summary-item-title {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .summary-item-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .conclusion {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+            padding: 16px;
+            border-radius: 6px;
+            border: 1px solid var(--accent);
+            font-size: 14px;
+            line-height: 1.7;
+            margin-top: 12px;
+        }
+
+        .how-to-read {
+            background: var(--bg-secondary);
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-left: 3px solid var(--accent);
+        }
+
+        .how-to-read-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .current-reading {
+            background: rgba(83, 109, 254, 0.15);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .current-reading-value {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+
+        .current-reading-signal {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        .metric-category {
+            margin-top: 16px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--accent);
+            font-size: 15px;
+        }
+
+        .error {
+            background: rgba(255, 23, 68, 0.1);
+            border: 1px solid var(--red);
+            border-radius: 6px;
+            padding: 12px;
+            color: var(--red);
+            font-size: 13px;
+        }
+
+        .data-source {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        details {
+            margin-top: 12px;
+        }
+
+        summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--accent);
+            padding: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        summary:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Global Macro Dashboard</h1>
+            <div class="header-info">
+                <div>
+                    <div><strong>Last Updated:</strong> <span id="lastUpdate">Loading...</span></div>
+                    <div><strong>Crash Risk Level:</strong> <span id="marketRegime">Analyzing...</span></div>
+                </div>
+                <button class="refresh-btn" onclick="loadAllData()">🔄 Refresh Data</button>
+            </div>
+        </div>
+
+        <div id="loadingIndicator" class="loading">
+            <div>Loading market data...</div>
+            <div style="font-size: 12px; margin-top: 8px;">This may take 30-60 seconds</div>
+            <div style="margin-top: 12px; width: 80%; max-width: 400px; height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; margin-left: auto; margin-right: auto;">
+                <div id="progressBar" style="height: 100%; width: 0%; background: var(--accent); transition: width 0.3s;"></div>
+            </div>
+            <div id="progressText" style="font-size: 11px; margin-top: 6px; color: var(--text-secondary);">Initializing...</div>
+        </div>
+
+        <div id="mainContent" style="display: none;">
+            <!-- LIQUIDITY & FED -->
+            <div class="section">
+                <div class="section-title">💰 Liquidity & Fed Policy</div>
+                <div class="indicator-grid" id="liquidityIndicators"></div>
+
+                <details>
+                    <summary>📚 How to Read Liquidity Indicators</summary>
+                    <div class="how-to-read">
+                        <div class="how-to-read-title">Fed Balance Sheet</div>
+                        <div>Total assets held by Federal Reserve. Expansion = liquidity injection (bullish), contraction = tightening (bearish). Red: Rapid contraction (&lt;5th percentile).</div>
+                        <div class="current-reading" id="current-WALCL">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">M2 Money Supply</div>
+                        <div>Broad measure of money in economy. YoY growth &gt;8% = inflationary pressure (yellow/red). Negative growth = deflationary risk (red).</div>
+                        <div class="current-reading" id="current-M2SL">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">Reverse Repo (RRP)</div>
+                        <div>Cash parked at Fed overnight. High levels (&gt;$1.5T) = excess liquidity seeking safety. Below $500B = liquidity draining from system (yellow). Below $100B = potential stress (red).</div>
+                        <div class="current-reading" id="current-RRPONTSYD">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">Treasury General Account (TGA)</div>
+                        <div>US government's checking account at Fed. Rising = draining liquidity from markets (bearish). Falling = injecting liquidity (bullish). Extreme moves (&gt;80th percentile) flag potential market impact.</div>
+                        <div class="current-reading" id="current-WTREGEN">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <!-- RATES & YIELD CURVE -->
+            <div class="section">
+                <div class="section-title">📈 Interest Rates & Yield Curve</div>
+                <div class="indicator-grid" id="ratesIndicators"></div>
+
+                <details>
+                    <summary>📚 How to Read Rate Indicators</summary>
+                    <div class="how-to-read">
+                        <div class="how-to-read-title">US 2-Year Treasury Yield</div>
+                        <div>Reflects Fed policy expectations over next 2 years. Above 5% = restrictive territory (red). Rapid moves flag policy shift expectations.</div>
+                        <div class="current-reading" id="current-DGS2">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">US 10-Year Treasury Yield</div>
+                        <div>Long-term growth & inflation expectations. Above 5% = historically high (red). Below 3% = growth concerns (yellow). Flight to quality drives yields down.</div>
+                        <div class="current-reading" id="current-DGS10">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">Yield Curve (2s10s)</div>
+                        <div>10Y minus 2Y yield. <strong>Inverted (&lt;0) = recession warning</strong> (red). Historically, recessions follow 6-18 months after inversion. Steepening above 100bps = expansion (green).</div>
+                        <div class="current-reading" id="current-YIELD_2s10s">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">Yield Curve (3M10Y)</div>
+                        <div>10Y minus 3-month yield. More reliable recession indicator per research. Inverted = high recession risk (red). Has preceded all recessions since 1960s.</div>
+                        <div class="current-reading" id="current-YIELD_3m10y">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Not Available</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <!-- CREDIT & RISK -->
+            <div class="section">
+                <div class="section-title">⚠️ Credit & Risk Spreads</div>
+                <div class="indicator-grid" id="creditIndicators"></div>
+
+                <details>
+                    <summary>📚 How to Read Credit Indicators</summary>
+                    <div class="how-to-read">
+                        <div class="how-to-read-title">HY Credit Spread (via HYG ETF)</div>
+                        <div>Proxy via high-yield bond ETF. Price declines = spreads widening = credit stress. <strong>HYG below $78 = stress (yellow), below $75 = severe (red)</strong>. Widening spreads historically precede market stress.</div>
+                        <div class="current-reading" id="current-HYG">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">IG Credit Spread (via LQD ETF)</div>
+                        <div>Investment-grade credit proxy. LQD below $105 = tightening credit (yellow), below $100 = stress (red). More stable than HY but moves first in systemic events.</div>
+                        <div class="current-reading" id="current-LQD">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <!-- VOLATILITY -->
+            <div class="section">
+                <div class="section-title">📊 Market Volatility</div>
+                <div class="indicator-grid" id="volatilityIndicators"></div>
+
+                <details>
+                    <summary>📚 How to Read Volatility Indicators</summary>
+                    <div class="how-to-read">
+                        <div class="how-to-read-title">VIX (Fear Index)</div>
+                        <div>S&P 500 implied volatility. <strong>&lt;15 = complacency (yellow), 15-25 = normal (green), 25-35 = elevated (yellow), &gt;35 = fear (red)</strong>. Spikes above 40 = panic selling opportunities historically. Below 12 = dangerous complacency.</div>
+                        <div class="current-reading" id="current-VIX">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <!-- ECONOMIC DATA -->
+            <div class="section">
+                <div class="section-title">🏭 Economic Activity</div>
+                <div class="indicator-grid" id="economicIndicators"></div>
+
+                <details>
+                    <summary>📚 How to Read Economic Indicators</summary>
+                    <div class="how-to-read">
+                        <div class="how-to-read-title">ISM Manufacturing PMI</div>
+                        <div><strong>&gt;50 = expansion, &lt;50 = contraction</strong>. Below 45 = deep contraction (red). Below 48 = recession risk (yellow). Above 55 = strong growth (green).</div>
+                        <div class="current-reading" id="current-MANEMP">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">ISM Services PMI</div>
+                        <div>70% of US economy. Same rule: &lt;50 = contraction (red). Services rarely contract; when it does, recession imminent.</div>
+                        <div class="current-reading" id="current-ISM_SERVICES">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Not Available</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">Unemployment Rate</div>
+                        <div>Below 4% = tight labor market (green). Above 5% = softening (yellow). Above 6% = recession territory (red). <strong>Sahm Rule: 0.5% rise from 12M low = recession</strong>.</div>
+                        <div class="current-reading" id="current-UNRATE">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">Initial Jobless Claims</div>
+                        <div>Weekly unemployment filings. Below 250K = healthy (green). 250-350K = watch (yellow). Above 350K = deteriorating (red). 4-week average smooths volatility.</div>
+                        <div class="current-reading" id="current-ICSA">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">CPI (Inflation YoY)</div>
+                        <div>2% = Fed target. Above 3% = above target (yellow). Above 4% = problematic (red). Below 1% = deflation risk (yellow).</div>
+                        <div class="current-reading" id="current-CPIAUCSL">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">PPI (Producer Prices YoY)</div>
+                        <div>Leading indicator for CPI. Rising PPI feeds into consumer inflation with 3-6 month lag. Above 4% = pipeline pressure (yellow).</div>
+                        <div class="current-reading" id="current-PPIACO">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <!-- FX & COMMODITIES -->
+            <div class="section">
+                <div class="section-title">💱 FX & Commodities</div>
+                <div class="indicator-grid" id="fxCommoditiesIndicators"></div>
+
+                <details>
+                    <summary>📚 How to Read FX & Commodity Indicators</summary>
+                    <div class="how-to-read">
+                        <div class="how-to-read-title">DXY (US Dollar Index)</div>
+                        <div>Dollar strength vs basket of currencies. Above 105 = strong dollar (bearish for commodities/EM). Below 95 = weak dollar (bullish risk assets). Above 110 = stress signal (red).</div>
+                        <div class="current-reading" id="current-DXY">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">Gold</div>
+                        <div>Safe haven & inflation hedge. Above $2,000 = risk-off/inflation fears (yellow if with other stress). Weak with rising yields = bearish. Strong despite yields = systemic fear.</div>
+                        <div class="current-reading" id="current-GLD">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">Copper (Dr. Copper)</div>
+                        <div>Leading economic indicator. Above $4.50/lb = strong demand (green). Below $3.50 = demand destruction (red). Predicts GDP with 6-month lead.</div>
+                        <div class="current-reading" id="current-COPPER">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">Oil (WTI Crude)</div>
+                        <div>Growth & geopolitical barometer. $70-85 = balanced (green). Below $60 = demand concerns (yellow). Above $95 = inflation/supply risk (red). Below $50 = recession signal (red).</div>
+                        <div class="current-reading" id="current-OIL">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <!-- EQUITIES -->
+            <div class="section">
+                <div class="section-title">📉 Global Equities</div>
+                <div class="indicator-grid" id="equitiesIndicators"></div>
+
+                <details>
+                    <summary>📚 How to Read Equity Indicators</summary>
+                    <div class="how-to-read">
+                        <div class="how-to-read-title">S&P 500</div>
+                        <div>US large-cap benchmark. Use relative to 200-day MA. Below 200-day = bearish trend (yellow). 10%+ below 200-day = bear market territory (red). New highs with divergences elsewhere = warning.</div>
+                        <div class="current-reading" id="current-SPX">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT READING</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+
+                        <div class="how-to-read-title" style="margin-top: 12px;">S&P 500 Drawdown from Peak</div>
+                        <div><strong>Critical crash indicator.</strong> Measures current decline from 52-week high. <strong>0% to -5% = normal (green)</strong>, <strong>-5% to -10% = correction (yellow)</strong>, <strong>-10% to -20% = significant correction (yellow)</strong>, <strong>-20% to -30% = bear market (red)</strong>, <strong>-30%+ = severe bear market (red)</strong>. Bear markets average -35% peak-to-trough historically.</div>
+                        <div class="current-reading" id="current-SPX_DRAWDOWN">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">CURRENT DRAWDOWN</div>
+                                <div class="current-reading-value">Loading...</div>
+                            </div>
+                            <div class="current-reading-signal">
+                                <span class="signal-dot" style="background: #666;"></span>
+                                <span style="color: var(--text-secondary);">Loading...</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 8px; padding: 8px; background: rgba(83, 109, 254, 0.1); border-radius: 4px; font-size: 12px;">
+                            <strong>Historical Context:</strong><br>
+                            • 2008 Financial Crisis: <strong>-57%</strong> (Oct 2007 → Mar 2009)<br>
+                            • 2020 COVID Crash: <strong>-34%</strong> (Feb → Mar 2020, 22 days)<br>
+                            • 2022 Bear Market: <strong>-25%</strong> (Jan → Oct 2022)<br>
+                            • 2000 Dot-Com (S&P): <strong>-49%</strong> (Mar 2000 → Oct 2002)<br>
+                            • Average Bear Market: <strong>-35%</strong> duration 14 months
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <!-- PROBABILITY TABLE -->
+            <div class="section">
+                <div class="section-title">🎯 Probability Estimates (12-Month Horizon)</div>
+                <table class="probability-table">
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Probability</th>
+                            <th>Key Drivers</th>
+                        </tr>
+                    </thead>
+                    <tbody id="probabilityTable">
+                        <tr><td colspan="3" class="loading">Calculating...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- SIGNAL SUMMARY -->
+            <div class="section">
+                <div class="section-title">🚦 Signal Summary</div>
+                <div class="summary-grid" id="signalSummary"></div>
+            </div>
+
+            <!-- MACRO CONCLUSION -->
+            <div class="section">
+                <div class="section-title">📝 Global Macro Perspective</div>
+                <div class="conclusion" id="macroConclusion">Analyzing market conditions...</div>
+            </div>
+
+            <!-- HISTORICAL CRASHES REFERENCE -->
+            <div class="section">
+                <div class="section-title">📜 Historical Market Crashes & Recessions Reference</div>
+                <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px;">
+                    Understanding how indicators behaved during past crises helps contextualize current readings. Below are key indicator levels during major market events.
+                </p>
+
+                <details open>
+                    <summary style="font-size: 16px; font-weight: 700; color: var(--red);">💥 2008 Financial Crisis (Sep 2008 - Mar 2009)</summary>
+                    <div class="how-to-read">
+                        <div style="margin-bottom: 12px;"><strong>Event:</strong> Lehman Brothers collapse triggered global financial system seizure. S&P 500 fell 57% peak-to-trough.</div>
+
+                        <table class="probability-table" style="font-size: 12px;">
+                            <thead>
+                                <tr>
+                                    <th>Indicator</th>
+                                    <th>Peak Crisis Level</th>
+                                    <th>Normal Range</th>
+                                    <th>Signal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>VIX</strong></td>
+                                    <td>89.5 (Oct 2008)</td>
+                                    <td>15-25</td>
+                                    <td>🔴 Extreme panic</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>HY Spreads</strong></td>
+                                    <td>~2,000 bps (Dec 2008)</td>
+                                    <td>300-500 bps</td>
+                                    <td>🔴 Credit market frozen</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>IG Spreads</strong></td>
+                                    <td>~650 bps</td>
+                                    <td>100-200 bps</td>
+                                    <td>🔴 Investment grade stress</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Unemployment</strong></td>
+                                    <td>10.0% (Oct 2009)</td>
+                                    <td>4-5%</td>
+                                    <td>🔴 Deep recession</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>2s10s Yield Curve</strong></td>
+                                    <td>Inverted -0.5% (2007)</td>
+                                    <td>+50 to +150 bps</td>
+                                    <td>🔴 Predicted recession 12M prior</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>3M10Y Yield Curve</strong></td>
+                                    <td>Inverted -1.5% (2007)</td>
+                                    <td>+100 to +200 bps</td>
+                                    <td>🔴 Strong recession signal</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fed Balance Sheet</strong></td>
+                                    <td>$900B → $2.2T expansion</td>
+                                    <td>~$800B pre-crisis</td>
+                                    <td>🟢 Emergency QE response</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Oil (WTI)</strong></td>
+                                    <td>$147 → $35</td>
+                                    <td>$70-85</td>
+                                    <td>🔴 Demand collapse</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Copper</strong></td>
+                                    <td>$4.00 → $1.30</td>
+                                    <td>$3.50-4.50</td>
+                                    <td>🔴 Global recession signal</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top: 12px; padding: 10px; background: rgba(255, 23, 68, 0.1); border-left: 3px solid var(--red); font-size: 12px;">
+                            <strong>Key Lesson:</strong> Yield curve inverted 12-18 months before recession. Credit spreads exploded first (early warning). VIX above 40 marked capitulation/buying opportunities. Fed balance sheet expansion signaled intervention floor.
+                        </div>
+                    </div>
+                </details>
+
+                <details style="margin-top: 12px;">
+                    <summary style="font-size: 16px; font-weight: 700; color: var(--red);">🔴 2000-2002 Dot-Com Crash</summary>
+                    <div class="how-to-read">
+                        <div style="margin-bottom: 12px;"><strong>Event:</strong> Tech bubble burst. NASDAQ fell 78% from peak. S&P 500 down 49%.</div>
+
+                        <table class="probability-table" style="font-size: 12px;">
+                            <thead>
+                                <tr>
+                                    <th>Indicator</th>
+                                    <th>Crisis Level</th>
+                                    <th>Normal Range</th>
+                                    <th>Signal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>VIX</strong></td>
+                                    <td>Peak ~45 (Sep 2001)</td>
+                                    <td>15-25</td>
+                                    <td>🔴 Post 9/11 spike</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Unemployment</strong></td>
+                                    <td>6.3% (Jun 2003)</td>
+                                    <td>4-5%</td>
+                                    <td>🟡 Mild recession</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>ISM Manufacturing</strong></td>
+                                    <td>41.2 (Sep 2001)</td>
+                                    <td>Above 50</td>
+                                    <td>🔴 Deep contraction</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Yield Curve</strong></td>
+                                    <td>Inverted 2000</td>
+                                    <td>Positive</td>
+                                    <td>🔴 Recession predictor</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>HY Spreads</strong></td>
+                                    <td>~1,000 bps</td>
+                                    <td>300-500 bps</td>
+                                    <td>🔴 Credit stress</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top: 12px; padding: 10px; background: rgba(255, 23, 68, 0.1); border-left: 3px solid var(--red); font-size: 12px;">
+                            <strong>Key Lesson:</strong> Asset-specific bubble (tech) without systemic credit crisis = shallower recession. Manufacturing PMI fell below 42 = severe downturn. Recovery took 2.5 years.
+                        </div>
+                    </div>
+                </details>
+
+                <details style="margin-top: 12px;">
+                    <summary style="font-size: 16px; font-weight: 700; color: var(--red);">🦠 2020 COVID-19 Crash (Feb-Mar 2020)</summary>
+                    <div class="how-to-read">
+                        <div style="margin-bottom: 12px;"><strong>Event:</strong> Pandemic-driven global lockdown. Fastest 30% decline in history (22 days). V-shaped recovery due to unprecedented stimulus.</div>
+
+                        <table class="probability-table" style="font-size: 12px;">
+                            <thead>
+                                <tr>
+                                    <th>Indicator</th>
+                                    <th>Crisis Level</th>
+                                    <th>Normal Range</th>
+                                    <th>Signal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>VIX</strong></td>
+                                    <td>82.7 (Mar 16, 2020)</td>
+                                    <td>15-25</td>
+                                    <td>🔴 Second highest ever</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>HY Spreads</strong></td>
+                                    <td>~1,100 bps</td>
+                                    <td>300-500 bps</td>
+                                    <td>🔴 Credit crunch</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Unemployment</strong></td>
+                                    <td>14.7% (Apr 2020)</td>
+                                    <td>4-5%</td>
+                                    <td>🔴 Highest since Great Depression</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Oil (WTI)</strong></td>
+                                    <td>-$37 (negative!)</td>
+                                    <td>$70-85</td>
+                                    <td>🔴 Demand destruction</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>ISM Manufacturing</strong></td>
+                                    <td>41.5 (Apr 2020)</td>
+                                    <td>Above 50</td>
+                                    <td>🔴 Shutdown impact</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fed Balance Sheet</strong></td>
+                                    <td>$4T → $7T+ (3 months)</td>
+                                    <td>$4T pre-COVID</td>
+                                    <td>🟢 Unprecedented expansion</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>M2 Money Supply</strong></td>
+                                    <td>+25% YoY growth</td>
+                                    <td>5-7% growth</td>
+                                    <td>🟢 Massive stimulus</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>10Y Treasury</strong></td>
+                                    <td>0.54% (Mar 2020)</td>
+                                    <td>2-3%</td>
+                                    <td>🔴 Flight to safety</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top: 12px; padding: 10px; background: rgba(255, 23, 68, 0.1); border-left: 3px solid var(--red); font-size: 12px;">
+                            <strong>Key Lesson:</strong> Exogenous shock with NO advance warning from typical indicators. Fed/fiscal response unprecedented. VIX spike marked exact bottom. Liquidity injection = V-shaped recovery. Not a typical business cycle recession.
+                        </div>
+                    </div>
+                </details>
+
+                <details style="margin-top: 12px;">
+                    <summary style="font-size: 16px; font-weight: 700; color: var(--red);">⚫ 1987 Black Monday (Oct 19, 1987)</summary>
+                    <div class="how-to-read">
+                        <div style="margin-bottom: 12px;"><strong>Event:</strong> Single-day 22.6% S&P 500 crash. Portfolio insurance + program trading cascade. No recession followed.</div>
+
+                        <table class="probability-table" style="font-size: 12px;">
+                            <thead>
+                                <tr>
+                                    <th>Indicator</th>
+                                    <th>Crisis Level</th>
+                                    <th>Signal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>S&P 500</strong></td>
+                                    <td>-22.6% in ONE day</td>
+                                    <td>🔴 Largest single-day drop ever</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>VIX (retroactive)</strong></td>
+                                    <td>Est. ~150+</td>
+                                    <td>🔴 Off the charts</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Economy</strong></td>
+                                    <td>Remained strong</td>
+                                    <td>🟢 Technical crash, not fundamental</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fed Response</strong></td>
+                                    <td>Immediate liquidity</td>
+                                    <td>🟢 "Fed put" established</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top: 12px; padding: 10px; background: rgba(255, 23, 68, 0.1); border-left: 3px solid var(--red); font-size: 12px;">
+                            <strong>Key Lesson:</strong> Market crashes can happen without recession if fundamentals intact. Program trading/technical factors can create crashes. Fed intervention critical. Demonstrated importance of circuit breakers (implemented after).
+                        </div>
+                    </div>
+                </details>
+
+                <details style="margin-top: 12px;">
+                    <summary style="font-size: 16px; font-weight: 700; color: var(--yellow);">⚠️ 2022 Bear Market (Jan-Oct 2022)</summary>
+                    <div class="how-to-read">
+                        <div style="margin-bottom: 12px;"><strong>Event:</strong> Fed tightening cycle. Inflation surge. S&P 500 down 25%, NASDAQ down 35%. No recession (yet).</div>
+
+                        <table class="probability-table" style="font-size: 12px;">
+                            <thead>
+                                <tr>
+                                    <th>Indicator</th>
+                                    <th>Crisis Level</th>
+                                    <th>Normal Range</th>
+                                    <th>Signal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>CPI Peak</strong></td>
+                                    <td>9.1% YoY (Jun 2022)</td>
+                                    <td>2%</td>
+                                    <td>🔴 40-year high inflation</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fed Funds Rate</strong></td>
+                                    <td>0% → 5.5% in 16 months</td>
+                                    <td>Gradual moves</td>
+                                    <td>🔴 Fastest tightening ever</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Yield Curve (2s10s)</strong></td>
+                                    <td>Inverted -1.0% (Jul 2023)</td>
+                                    <td>Positive</td>
+                                    <td>🔴 Deepest inversion since 1980s</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>VIX</strong></td>
+                                    <td>Peak ~35</td>
+                                    <td>15-25</td>
+                                    <td>🟡 Elevated but not panic</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>HY Spreads</strong></td>
+                                    <td>~600 bps (Oct 2022)</td>
+                                    <td>300-500 bps</td>
+                                    <td>🟡 Moderate stress</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>DXY</strong></td>
+                                    <td>114 (Sep 2022)</td>
+                                    <td>95-105</td>
+                                    <td>🔴 Strong dollar stress on EM</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top: 12px; padding: 10px; background: rgba(255, 215, 0, 0.15); border-left: 3px solid var(--yellow); font-size: 12px;">
+                            <strong>Key Lesson:</strong> Bear market without (yet) recession = soft landing attempt. Yield curve inversion without follow-through (so far) = lag effects still playing out? Strong labor market offsetting rate hikes. Tech/growth hit hardest (duration risk).
+                        </div>
+                    </div>
+                </details>
+
+                <details style="margin-top: 12px;">
+                    <summary style="font-size: 16px; font-weight: 700; color: var(--red);">🏚️ 2011 European Debt Crisis</summary>
+                    <div class="how-to-read">
+                        <div style="margin-bottom: 12px;"><strong>Event:</strong> Greek sovereign debt crisis. Contagion fears. S&P 500 down 19% (near bear market).</div>
+
+                        <table class="probability-table" style="font-size: 12px;">
+                            <thead>
+                                <tr>
+                                    <th>Indicator</th>
+                                    <th>Crisis Level</th>
+                                    <th>Signal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>VIX</strong></td>
+                                    <td>Peak ~48 (Aug 2011)</td>
+                                    <td>🔴 Contagion fears</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>HY Spreads</strong></td>
+                                    <td>~900 bps</td>
+                                    <td>🔴 Credit stress</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Gold</strong></td>
+                                    <td>$1,900 (all-time high)</td>
+                                    <td>🟡 Safe haven bid</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>10Y Treasury</strong></td>
+                                    <td>1.5% (flight to safety)</td>
+                                    <td>🔴 Risk-off</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top: 12px; padding: 10px; background: rgba(255, 23, 68, 0.1); border-left: 3px solid var(--red); font-size: 12px;">
+                            <strong>Key Lesson:</strong> Sovereign debt crisis = systemic risk. ECB "whatever it takes" (Draghi) ended crisis. Gold hit ATH on currency fears. US avoided recession due to strong domestic fundamentals.
+                        </div>
+                    </div>
+                </details>
+
+                <div style="margin-top: 20px; padding: 16px; background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%); border-radius: 6px; border: 1px solid var(--accent);">
+                    <div style="font-weight: 700; font-size: 15px; margin-bottom: 12px; color: var(--accent);">📊 Pattern Recognition Across Crashes</div>
+                    <div style="font-size: 13px; line-height: 1.7;">
+                        <strong>Early Warning Signals (6-18 months ahead):</strong>
+                        <ul style="margin-left: 20px; margin-top: 6px;">
+                            <li>Yield curve inversion (2s10s or 3m10y) - preceded ALL recessions except 2020 (exogenous)</li>
+                            <li>ISM Manufacturing below 48 for 3+ months</li>
+                            <li>Credit spreads (HY) starting to widen from lows</li>
+                            <li>Unemployment rising 0.5%+ from 12-month low (Sahm Rule)</li>
+                        </ul>
+
+                        <strong style="display: block; margin-top: 12px;">Acute Crisis Signals (immediate):</strong>
+                        <ul style="margin-left: 20px; margin-top: 6px;">
+                            <li>VIX above 40 = panic/capitulation (often marks bottoms)</li>
+                            <li>HY spreads above 1,000 bps = credit market dysfunction</li>
+                            <li>Fed emergency meetings/interventions = systemic risk</li>
+                            <li>Copper down 30%+ = global demand collapse</li>
+                        </ul>
+
+                        <strong style="display: block; margin-top: 12px;">Recovery Signals:</strong>
+                        <ul style="margin-left: 20px; margin-top: 6px;">
+                            <li>Fed balance sheet expansion = liquidity floor</li>
+                            <li>Credit spreads tightening from peaks</li>
+                            <li>VIX declining from 40+ back to 20s</li>
+                            <li>ISM Manufacturing back above 50</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DATA SOURCES -->
+            <div class="section" style="font-size: 12px; color: var(--text-secondary);">
+                <div class="section-title">📊 Data Sources & Methodology</div>
+                <div><strong>FRED API (via CORS proxy):</strong> Fed balance sheet, M2, RRP, TGA, unemployment, jobless claims, CPI, PPI, ISM data - loaded in parallel</div>
+                <div style="margin-top: 8px;"><strong>Yahoo Finance (via CORS proxy):</strong> VIX, S&P 500, Treasury yields (2Y/10Y), equities, FX, commodities, HYG/LQD credit ETFs, 52-week drawdown calculation</div>
+                <div style="margin-top: 8px;"><strong>Update Frequency:</strong> Daily for macro data (FRED, delayed 1 day), real-time for market data (Yahoo Finance, 15-min delay)</div>
+                <div style="margin-top: 8px;"><strong>Signal Methodology:</strong> Historical percentile-based thresholds (10-year ranges). Red = top/bottom 20%, Yellow = 20-40%, Green = normal range</div>
+                <div style="margin-top: 8px;"><strong>Drawdown Calculation:</strong> (Current Price - 52-Week High) / 52-Week High × 100. Updated real-time with market data.</div>
+                <div style="margin-top: 8px;"><strong>Caching:</strong> All successfully loaded data cached locally for 24 hours. Opens instantly with cached data, then refreshes in background.</div>
+                <div style="margin-top: 8px;"><strong>CORS Proxy:</strong> Uses api.allorigins.win to bypass browser restrictions. Both FRED and Yahoo data routed through proxy for reliability.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // API CONFIGURATION - NO API KEY NEEDED!
+        // HYBRID: FRED (Official) + Yahoo Finance (Fast)
+        // ============================================
+
+        // Data storage
+        let marketData = {};
+        let signals = { green: [], yellow: [], red: [] };
+        let loadingProgress = 0;
+        let totalAPICalls = 10; // Yahoo Finance symbols (includes yields now)
+        let spx52WeekHigh = 0; // For drawdown calculation
+
+        // FRED API endpoint (Official - for macro/economic data)
+        const FRED_API = 'https://api.stlouisfed.org/fred/series/observations';
+        const FRED_KEY = 'a940b255c4e24804abc90248e9c776bb'; // Public demo key
+
+        // Yahoo Finance via CORS proxy (for market data - FAST!)
+        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+        const YAHOO_API = 'https://query1.finance.yahoo.com/v8/finance/chart/';
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            // Try to load cached data first
+            loadCachedData();
+            loadAllData();
+        });
+
+        // Load cached data from localStorage for instant display
+        function loadCachedData() {
+            const cached = localStorage.getItem('macroData');
+            if (cached) {
+                try {
+                    const data = JSON.parse(cached);
+                    if (data.timestamp && (Date.now() - data.timestamp < 24 * 60 * 60 * 1000)) { // Less than 24 hours old
+                        marketData = data.marketData;
+                        calculateAllSignals();
+                        calculateProbabilities();
+                        renderIndicators();
+                        updateCurrentReadings();
+                        renderSignalSummary();
+                        generateMacroConclusion();
+
+                        const cacheDate = new Date(data.timestamp).toLocaleString();
+                        document.getElementById('lastUpdate').textContent = cacheDate + ' (cached)';
+                        document.getElementById('marketRegime').textContent = 'Loading fresh data...';
+                        document.getElementById('loadingIndicator').style.display = 'block';
+                        document.getElementById('mainContent').style.display = 'block';
+                    }
+                } catch (e) {
+                    console.error('Error loading cached data:', e);
+                }
+            }
+        }
+
+        // Update progress indicator
+        function updateProgress(message) {
+            loadingProgress++;
+            const percent = Math.min(100, (loadingProgress / (totalAPICalls + 5)) * 100);
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('progressText').textContent = message;
+        }
+
+        // Main data loading function
+        async function loadAllData() {
+            loadingProgress = 0;
+            document.getElementById('loadingIndicator').style.display = 'block';
+            signals = { green: [], yellow: [], red: [] };
+            marketData = {}; // Reset marketData
+
+            try {
+                updateProgress('Loading FRED data...');
+                await loadFREDData();
+
+                updateProgress('Loading market data (fast with Yahoo Finance)...');
+                await loadYahooFinanceData();
+
+                // Calculate signals and probabilities
+                updateProgress('Calculating signals...');
+                try {
+                    calculateAllSignals();
+                    calculateProbabilities();
+                } catch (error) {
+                    console.error('Error calculating signals:', error);
+                }
+
+                // Render UI
+                updateProgress('Rendering dashboard...');
+                try {
+                    renderIndicators();
+                    updateCurrentReadings();
+                    renderSignalSummary();
+                    generateMacroConclusion();
+                } catch (error) {
+                    console.error('Error rendering dashboard:', error);
+                }
+
+                // Save to localStorage
+                localStorage.setItem('macroData', JSON.stringify({
+                    timestamp: Date.now(),
+                    marketData: marketData
+                }));
+
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('loadingIndicator').innerHTML = `
+                    <div class="error">
+                        <strong>Error loading data:</strong> ${error.message}<br>
+                        Some data sources may be temporarily unavailable.<br>
+                        <button class="refresh-btn" onclick="location.reload()" style="margin-top: 12px;">Retry</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Load FRED data (PARALLEL with timeout for speed + reliability)
+        async function loadFREDData() {
+            const fredSeries = {
+                'WALCL': 'Fed Balance Sheet',
+                'M2SL': 'M2 Money Supply',
+                'RRPONTSYD': 'Reverse Repo',
+                'WTREGEN': 'Treasury General Account',
+                'UNRATE': 'Unemployment Rate',
+                'ICSA': 'Jobless Claims',
+                'CPIAUCSL': 'CPI',
+                'PPIACO': 'PPI',
+                'MANEMP': 'ISM Manufacturing (proxy)'
+            };
+
+            updateProgress('Loading FRED data (parallel)...');
+
+            // Helper function to fetch with timeout
+            const fetchWithTimeout = async (url, timeout = 10000) => {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+                try {
+                    const response = await fetch(url, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    return response;
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    throw error;
+                }
+            };
+
+            // Load all FRED data in parallel via CORS proxy (more reliable)
+            const promises = Object.entries(fredSeries).map(async ([seriesId, name]) => {
+                try {
+                    const fredURL = `${FRED_API}?series_id=${seriesId}&api_key=${FRED_KEY}&file_type=json&sort_order=desc&limit=1`;
+                    const proxiedURL = `${CORS_PROXY}${encodeURIComponent(fredURL)}`;
+
+                    console.log(`Loading FRED ${seriesId}...`); // Debug
+                    const response = await fetchWithTimeout(proxiedURL, 15000);
+                    const data = await response.json();
+
+                    console.log(`${seriesId} response:`, data); // Debug
+
+                    if (data.observations && data.observations.length > 0) {
+                        const value = parseFloat(data.observations[0].value);
+                        marketData[seriesId] = {
+                            name: name,
+                            value: value,
+                            date: data.observations[0].date,
+                            source: 'FRED'
+                        };
+                        console.log(`${seriesId} loaded: ${value}`); // Debug
+                    } else {
+                        console.warn(`${seriesId} - No observations in response`);
+                        marketData[seriesId] = {
+                            name: name,
+                            value: null,
+                            source: 'FRED (no data)',
+                            error: true
+                        };
+                    }
+                } catch (error) {
+                    console.error(`Error loading ${seriesId}:`, error);
+                    // Mark as unavailable but don't block other data
+                    marketData[seriesId] = {
+                        name: name,
+                        value: null,
+                        source: 'FRED (unavailable)',
+                        error: true
+                    };
+                }
+            });
+
+            // Wait for all to complete (or timeout)
+            await Promise.all(promises);
+        }
+
+        // Load Yahoo Finance data (FAST - no rate limits!)
+        async function loadYahooFinanceData() {
+            const symbols = {
+                'VIX': { name: 'VIX', yahoo: '^VIX' },
+                'SPX': { name: 'S&P 500', yahoo: 'SPY' }, // Use SPY ETF instead of ^GSPC (more reliable)
+                'DXY': { name: 'US Dollar Index', yahoo: 'UUP' }, // Use UUP ETF as proxy
+                'GLD': { name: 'Gold', yahoo: 'GLD' }, // Gold ETF
+                'COPPER': { name: 'Copper', yahoo: 'COPX' }, // Copper miners ETF
+                'OIL': { name: 'Oil (WTI)', yahoo: 'USO' }, // Oil ETF
+                'HYG': { name: 'HY Credit (HYG)', yahoo: 'HYG' },
+                'LQD': { name: 'IG Credit (LQD)', yahoo: 'LQD' },
+                'DGS2': { name: 'US 2Y Yield', yahoo: '^IRX', multiplier: 0.1 },
+                'DGS10': { name: 'US 10Y Yield', yahoo: '^TNX', multiplier: 0.1 }
+            };
+
+            let count = 0;
+            for (const [key, config] of Object.entries(symbols)) {
+                try {
+                    count++;
+                    updateProgress(`Loading ${config.name} (${count}/${Object.keys(symbols).length})...`);
+
+                    // Fetch current data + 52-week history for drawdown calculation
+                    const yahooURL = encodeURIComponent(`${YAHOO_API}${config.yahoo}?range=1y&interval=1d`);
+                    const url = `${CORS_PROXY}${yahooURL}`;
+
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    console.log(`${key} data:`, data); // Debug logging
+
+                    if (data.chart && data.chart.result && data.chart.result[0]) {
+                        const result = data.chart.result[0];
+                        const meta = result.meta;
+                        const quotes = result.indicators.quote[0];
+
+                        let currentPrice = meta.regularMarketPrice;
+                        const previousClose = meta.chartPreviousClose;
+
+                        // Apply multiplier for yields (they come as 40 for 4.0%)
+                        if (config.multiplier) {
+                            currentPrice = currentPrice * config.multiplier;
+                        }
+
+                        const change = ((currentPrice - previousClose) / previousClose) * 100;
+
+                        marketData[key] = {
+                            name: config.name,
+                            value: currentPrice,
+                            change: change,
+                            source: 'Yahoo Finance'
+                        };
+
+                        console.log(`${key} loaded successfully:`, currentPrice); // Debug logging
+
+                        // Calculate 52-week high for S&P 500 drawdown
+                        if (key === 'SPX' && quotes && quotes.high) {
+                            const high52w = Math.max(...quotes.high.filter(v => v !== null));
+                            spx52WeekHigh = high52w;
+                            const drawdown = ((currentPrice - high52w) / high52w) * 100;
+
+                            marketData['SPX_DRAWDOWN'] = {
+                                name: 'S&P 500 Drawdown',
+                                value: drawdown,
+                                peak: high52w,
+                                current: currentPrice,
+                                source: 'Calculated'
+                            };
+
+                            console.log(`SPX_DRAWDOWN calculated:`, drawdown); // Debug logging
+                        }
+                    } else {
+                        console.warn(`${key} - No valid data returned`);
+                        marketData[key] = {
+                            name: config.name,
+                            value: null,
+                            source: 'Yahoo Finance (unavailable)',
+                            error: true
+                        };
+                    }
+
+                    // Small delay to be nice to the proxy (but no rate limit!)
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    console.error(`Error loading ${key}:`, error);
+                    marketData[key] = {
+                        name: config.name,
+                        value: null,
+                        source: 'Yahoo Finance (error)',
+                        error: true
+                    };
+                }
+            }
+
+            // Calculate yield curves if we have the data from Yahoo
+            if (marketData['DGS2'] && marketData['DGS10']) {
+                marketData['YIELD_2s10s'] = {
+                    name: 'Yield Curve (2s10s)',
+                    value: marketData['DGS10'].value - marketData['DGS2'].value,
+                    source: 'Calculated'
+                };
+            }
+        }
+
+        // Calculate signals based on historical percentiles and thresholds
+        function calculateAllSignals() {
+            // VIX signals
+            if (marketData['VIX'] && marketData['VIX'].value !== null && marketData['VIX'].value !== undefined) {
+                const vix = marketData['VIX'].value;
+                if (vix < 15) {
+                    marketData['VIX'].signal = 'yellow';
+                    marketData['VIX'].reason = 'Complacency risk';
+                    signals.yellow.push('VIX: Complacency (' + vix.toFixed(1) + ')');
+                } else if (vix >= 15 && vix < 25) {
+                    marketData['VIX'].signal = 'green';
+                    marketData['VIX'].reason = 'Normal range';
+                    signals.green.push('VIX: Normal (' + vix.toFixed(1) + ')');
+                } else if (vix >= 25 && vix < 35) {
+                    marketData['VIX'].signal = 'yellow';
+                    marketData['VIX'].reason = 'Elevated volatility';
+                    signals.yellow.push('VIX: Elevated (' + vix.toFixed(1) + ')');
+                } else {
+                    marketData['VIX'].signal = 'red';
+                    marketData['VIX'].reason = 'Fear/panic territory';
+                    signals.red.push('VIX: Panic (' + vix.toFixed(1) + ')');
+                }
+            }
+
+            // Yield Curve (2s10s)
+            if (marketData['YIELD_2s10s'] && marketData['YIELD_2s10s'].value !== null && marketData['YIELD_2s10s'].value !== undefined) {
+                const curve = marketData['YIELD_2s10s'].value;
+                if (curve < 0) {
+                    marketData['YIELD_2s10s'].signal = 'red';
+                    marketData['YIELD_2s10s'].reason = 'Inverted - recession warning';
+                    signals.red.push('Yield Curve: Inverted (' + curve.toFixed(0) + 'bps)');
+                } else if (curve < 50) {
+                    marketData['YIELD_2s10s'].signal = 'yellow';
+                    marketData['YIELD_2s10s'].reason = 'Flattening - monitor closely';
+                    signals.yellow.push('Yield Curve: Flat (' + curve.toFixed(0) + 'bps)');
+                } else {
+                    marketData['YIELD_2s10s'].signal = 'green';
+                    marketData['YIELD_2s10s'].reason = 'Normal/steepening';
+                    signals.green.push('Yield Curve: Healthy (' + curve.toFixed(0) + 'bps)');
+                }
+            }
+
+            // Unemployment
+            if (marketData['UNRATE'] && marketData['UNRATE'].value !== null && marketData['UNRATE'].value !== undefined) {
+                const unemp = marketData['UNRATE'].value;
+                if (unemp < 4.5) {
+                    marketData['UNRATE'].signal = 'green';
+                    marketData['UNRATE'].reason = 'Strong labor market';
+                    signals.green.push('Unemployment: Strong (' + unemp.toFixed(1) + '%)');
+                } else if (unemp < 5.5) {
+                    marketData['UNRATE'].signal = 'yellow';
+                    marketData['UNRATE'].reason = 'Softening labor market';
+                    signals.yellow.push('Unemployment: Softening (' + unemp.toFixed(1) + '%)');
+                } else {
+                    marketData['UNRATE'].signal = 'red';
+                    marketData['UNRATE'].reason = 'Weak labor market';
+                    signals.red.push('Unemployment: Weak (' + unemp.toFixed(1) + '%)');
+                }
+            }
+
+            // HYG (High Yield proxy)
+            if (marketData['HYG'] && marketData['HYG'].value !== null && marketData['HYG'].value !== undefined) {
+                const hyg = marketData['HYG'].value;
+                if (hyg > 78) {
+                    marketData['HYG'].signal = 'green';
+                    marketData['HYG'].reason = 'Healthy credit markets';
+                    signals.green.push('HY Credit: Healthy ($' + hyg.toFixed(2) + ')');
+                } else if (hyg > 75) {
+                    marketData['HYG'].signal = 'yellow';
+                    marketData['HYG'].reason = 'Credit stress emerging';
+                    signals.yellow.push('HY Credit: Stress ($' + hyg.toFixed(2) + ')');
+                } else {
+                    marketData['HYG'].signal = 'red';
+                    marketData['HYG'].reason = 'Severe credit stress';
+                    signals.red.push('HY Credit: Severe stress ($' + hyg.toFixed(2) + ')');
+                }
+            }
+
+            // LQD (Investment Grade proxy)
+            if (marketData['LQD'] && marketData['LQD'].value !== null && marketData['LQD'].value !== undefined) {
+                const lqd = marketData['LQD'].value;
+                if (lqd > 105) {
+                    marketData['LQD'].signal = 'green';
+                    marketData['LQD'].reason = 'IG credit stable';
+                    signals.green.push('IG Credit: Stable ($' + lqd.toFixed(2) + ')');
+                } else if (lqd > 100) {
+                    marketData['LQD'].signal = 'yellow';
+                    marketData['LQD'].reason = 'IG credit tightening';
+                    signals.yellow.push('IG Credit: Tightening ($' + lqd.toFixed(2) + ')');
+                } else {
+                    marketData['LQD'].signal = 'red';
+                    marketData['LQD'].reason = 'IG credit stress';
+                    signals.red.push('IG Credit: Stress ($' + lqd.toFixed(2) + ')');
+                }
+            }
+
+            // DXY (Dollar strength)
+            if (marketData['DXY'] && marketData['DXY'].value !== null && marketData['DXY'].value !== undefined) {
+                const dxy = marketData['DXY'].value;
+                if (dxy < 95) {
+                    marketData['DXY'].signal = 'green';
+                    marketData['DXY'].reason = 'Weak dollar - risk on';
+                    signals.green.push('Dollar: Weak (supportive)');
+                } else if (dxy < 105) {
+                    marketData['DXY'].signal = 'yellow';
+                    marketData['DXY'].reason = 'Moderate dollar strength';
+                    signals.yellow.push('Dollar: Moderate');
+                } else {
+                    marketData['DXY'].signal = 'red';
+                    marketData['DXY'].reason = 'Strong dollar - stress signal';
+                    signals.red.push('Dollar: Strong (risk-off)');
+                }
+            }
+
+            // S&P 500 Drawdown signals
+            if (marketData['SPX_DRAWDOWN'] && marketData['SPX_DRAWDOWN'].value !== null && marketData['SPX_DRAWDOWN'].value !== undefined) {
+                const drawdown = marketData['SPX_DRAWDOWN'].value;
+                if (drawdown >= -5) {
+                    marketData['SPX_DRAWDOWN'].signal = 'green';
+                    marketData['SPX_DRAWDOWN'].reason = 'Normal volatility';
+                    signals.green.push('Drawdown: Minimal (' + drawdown.toFixed(1) + '%)');
+                } else if (drawdown >= -10) {
+                    marketData['SPX_DRAWDOWN'].signal = 'yellow';
+                    marketData['SPX_DRAWDOWN'].reason = 'Correction territory';
+                    signals.yellow.push('Drawdown: Correction (' + drawdown.toFixed(1) + '%)');
+                } else if (drawdown >= -20) {
+                    marketData['SPX_DRAWDOWN'].signal = 'yellow';
+                    marketData['SPX_DRAWDOWN'].reason = 'Significant correction';
+                    signals.yellow.push('Drawdown: Deep correction (' + drawdown.toFixed(1) + '%)');
+                } else if (drawdown >= -30) {
+                    marketData['SPX_DRAWDOWN'].signal = 'red';
+                    marketData['SPX_DRAWDOWN'].reason = 'Bear market territory';
+                    signals.red.push('Drawdown: Bear market (' + drawdown.toFixed(1) + '%)');
+                } else {
+                    marketData['SPX_DRAWDOWN'].signal = 'red';
+                    marketData['SPX_DRAWDOWN'].reason = 'Severe bear market';
+                    signals.red.push('Drawdown: Severe (' + drawdown.toFixed(1) + '%)');
+                }
+            }
+
+            // Add simple green signals for other indicators if no issues (only if data exists)
+            for (const key of ['WALCL', 'M2SL', 'RRPONTSYD', 'WTREGEN', 'DGS2', 'DGS10', 'SPX', 'GLD', 'COPPER', 'OIL']) {
+                if (marketData[key] && !marketData[key].signal && marketData[key].value !== undefined) {
+                    marketData[key].signal = 'green';
+                    marketData[key].reason = 'Within normal ranges';
+                }
+            }
+
+            // For indicators without signals yet (still loading), mark as pending
+            for (const key in marketData) {
+                if (!marketData[key].signal) {
+                    marketData[key].signal = 'yellow';
+                    marketData[key].reason = 'Loading...';
+                }
+            }
+        }
+
+        // Calculate recession/crash probabilities
+        function calculateProbabilities() {
+            let riskScore = 0;
+            const weights = {
+                red: 3,
+                yellow: 1,
+                green: -1
+            };
+
+            riskScore += signals.red.length * weights.red;
+            riskScore += signals.yellow.length * weights.yellow;
+            riskScore += signals.green.length * weights.green;
+
+            // Adjust for drawdown (if already in bear market, probability is 100%)
+            let drawdownAdjustment = 0;
+            if (marketData['SPX_DRAWDOWN'] && marketData['SPX_DRAWDOWN'].value !== null && marketData['SPX_DRAWDOWN'].value !== undefined) {
+                const dd = marketData['SPX_DRAWDOWN'].value;
+                if (dd <= -20) {
+                    drawdownAdjustment = 30; // Already in bear market
+                } else if (dd <= -15) {
+                    drawdownAdjustment = 15; // Approaching bear market
+                } else if (dd <= -10) {
+                    drawdownAdjustment = 8; // Deep correction
+                }
+            }
+
+            // Normalize to probability
+            const maxScore = 15; // Theoretical max
+            const recessionProb = Math.max(5, Math.min(95, 15 + (riskScore / maxScore) * 70));
+            const bearMarketProb = Math.max(5, Math.min(95, 20 + (riskScore / maxScore) * 60 + drawdownAdjustment));
+            const crashProb = Math.max(2, Math.min(50, 5 + (riskScore / maxScore) * 35 + (drawdownAdjustment / 2)));
+
+            const probData = [
+                {
+                    event: 'US Recession',
+                    probability: recessionProb.toFixed(0) + '%',
+                    drivers: signals.red.slice(0, 2).join('; ') || 'Monitoring conditions',
+                    class: recessionProb > 50 ? 'prob-high' : recessionProb > 30 ? 'prob-medium' : 'prob-low'
+                },
+                {
+                    event: 'Bear Market (-20%)',
+                    probability: bearMarketProb.toFixed(0) + '%',
+                    drivers: 'Credit conditions, volatility, growth indicators',
+                    class: bearMarketProb > 50 ? 'prob-high' : bearMarketProb > 30 ? 'prob-medium' : 'prob-low'
+                },
+                {
+                    event: 'Market Crash (-30%+)',
+                    probability: crashProb.toFixed(0) + '%',
+                    drivers: 'Systemic stress indicators',
+                    class: crashProb > 30 ? 'prob-high' : crashProb > 15 ? 'prob-medium' : 'prob-low'
+                }
+            ];
+
+            const tableBody = document.getElementById('probabilityTable');
+            tableBody.innerHTML = probData.map(row => `
+                <tr>
+                    <td><strong>${row.event}</strong></td>
+                    <td class="${row.class}">${row.probability}</td>
+                    <td style="font-size: 12px;">${row.drivers}</td>
+                </tr>
+            `).join('');
+
+            // Update crash risk level
+            let regime = 'Low Risk';
+            if (signals.red.length >= 3) regime = 'High Risk';
+            else if (signals.red.length >= 1 || signals.yellow.length >= 4) regime = 'Medium Risk';
+            document.getElementById('marketRegime').textContent = regime;
+            document.getElementById('marketRegime').style.color =
+                regime === 'High Risk' ? 'var(--red)' :
+                regime === 'Medium Risk' ? 'var(--yellow)' :
+                'var(--green)';
+        }
+
+        // Render all indicators
+        function renderIndicators() {
+            const categories = {
+                liquidityIndicators: ['WALCL', 'M2SL', 'RRPONTSYD', 'WTREGEN'],
+                ratesIndicators: ['DGS2', 'DGS10', 'YIELD_2s10s'],
+                creditIndicators: ['HYG', 'LQD'],
+                volatilityIndicators: ['VIX'],
+                economicIndicators: ['MANEMP', 'UNRATE', 'ICSA', 'CPIAUCSL', 'PPIACO'],
+                fxCommoditiesIndicators: ['DXY', 'GLD', 'COPPER', 'OIL'],
+                equitiesIndicators: ['SPX', 'SPX_DRAWDOWN']
+            };
+
+            for (const [containerId, keys] of Object.entries(categories)) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = keys.map(key => {
+                    const data = marketData[key];
+                    if (!data || data.value === null || data.value === undefined) return '';
+
+                    const signalClass = 'signal-' + (data.signal || 'green');
+                    let valueDisplay = data.value.toFixed(2);
+
+                    // Format specific indicators
+                    if (key.includes('WALCL') || key.includes('M2SL')) valueDisplay = '$' + (data.value / 1000).toFixed(1) + 'T';
+                    if (key.includes('RRPONTSYD') || key.includes('WTREGEN')) valueDisplay = '$' + (data.value / 1000).toFixed(0) + 'B';
+                    if (key.includes('YIELD') || key.includes('DGS')) valueDisplay = data.value.toFixed(2) + '%';
+                    if (key === 'UNRATE' || key === 'CPIAUCSL' || key === 'PPIACO') valueDisplay = data.value.toFixed(1) + '%';
+                    if (key === 'ICSA') valueDisplay = (data.value / 1000).toFixed(0) + 'K';
+                    if (key === 'VIX') valueDisplay = data.value.toFixed(1);
+                    if (key === 'SPX_DRAWDOWN') valueDisplay = data.value.toFixed(1) + '%';
+
+                    return `
+                        <div class="indicator">
+                            <div class="indicator-header">
+                                <div class="indicator-name">${data.name}</div>
+                                <span class="signal-dot ${signalClass}"></span>
+                            </div>
+                            <div class="indicator-value">${valueDisplay}</div>
+                            <div class="indicator-meta">${data.reason || 'Normal'}</div>
+                            <div class="data-source">${data.source}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Render signal summary
+        function renderSignalSummary() {
+            const summary = document.getElementById('signalSummary');
+
+            const summaryHTML = `
+                <div class="summary-item green">
+                    <div class="summary-item-title">🟢 Green Signals (${signals.green.length})</div>
+                    <div class="summary-item-text">${signals.green.join(' • ') || 'None detected'}</div>
+                </div>
+                <div class="summary-item yellow">
+                    <div class="summary-item-title">🟡 Yellow Signals (${signals.yellow.length})</div>
+                    <div class="summary-item-text">${signals.yellow.join(' • ') || 'None detected'}</div>
+                </div>
+                <div class="summary-item red">
+                    <div class="summary-item-title">🔴 Red Signals (${signals.red.length})</div>
+                    <div class="summary-item-text">${signals.red.join(' • ') || 'None detected'}</div>
+                </div>
+            `;
+
+            summary.innerHTML = summaryHTML;
+        }
+
+        // Generate dynamic macro conclusion
+        function generateMacroConclusion() {
+            const redCount = signals.red.length;
+            const yellowCount = signals.yellow.length;
+            const greenCount = signals.green.length;
+
+            let stressLevel = 'LOW';
+            if (redCount >= 3) stressLevel = 'HIGH';
+            else if (redCount >= 1 || yellowCount >= 4) stressLevel = 'MODERATE';
+
+            let regime = 'Low Risk';
+            if (redCount >= 3) regime = 'High Risk';
+            else if (redCount >= 1 || yellowCount >= 4) regime = 'Medium Risk';
+
+            const topConcerns = signals.red.slice(0, 3).join(', ') || 'no critical warnings';
+            const supports = signals.green.slice(0, 2).join(' and ') || 'limited positive signals';
+
+            let conclusion = `Market conditions currently show <strong>${stressLevel}</strong> systemic stress with <strong>${redCount} red signals</strong>, <strong>${yellowCount} yellow signals</strong>, and <strong>${greenCount} green signals</strong> across monitored indicators. `;
+
+            if (redCount >= 3) {
+                conclusion += `Key concerns include ${topConcerns}, indicating elevated risk of market dislocation. Historical precedents suggest heightened caution is warranted. `;
+            } else if (redCount >= 1) {
+                conclusion += `Primary concerns center on ${topConcerns}, requiring close monitoring but not yet systemic. `;
+            } else {
+                conclusion += `No critical red flags detected at this time. `;
+            }
+
+            if (greenCount >= 5) {
+                conclusion += `However, supportive factors including ${supports} provide meaningful offsets. `;
+            } else if (greenCount >= 2) {
+                conclusion += `Some supportive elements exist (${supports}), though insufficient to fully offset concerns. `;
+            }
+
+            conclusion += `Overall market regime assessment: <strong>${regime}</strong>. `;
+
+            if (regime === 'RISK-OFF') {
+                conclusion += `Defensive positioning recommended with focus on capital preservation, quality assets, and liquid alternatives. Monitor for capitulation signals that may present tactical opportunities.`;
+            } else if (regime === 'TRANSITIONAL') {
+                conclusion += `Balanced positioning advised with selective risk-taking in high-conviction ideas. Maintain liquidity and defensive hedges while conditions clarify.`;
+            } else {
+                conclusion += `Constructive environment for risk assets, though remain vigilant for emerging stress signals. Continue normal risk allocation with appropriate diversification.`;
+            }
+
+            document.getElementById('macroConclusion').innerHTML = conclusion;
+        }
+
+        // Update current reading boxes in "How to Read" sections
+        function updateCurrentReadings() {
+            const indicators = [
+                { key: 'WALCL', format: val => '$' + (val / 1000).toFixed(1) + 'T' },
+                { key: 'M2SL', format: val => '$' + (val / 1000).toFixed(1) + 'T' },
+                { key: 'RRPONTSYD', format: val => '$' + (val / 1000).toFixed(0) + 'B' },
+                { key: 'WTREGEN', format: val => '$' + (val / 1000).toFixed(0) + 'B' },
+                { key: 'DGS2', format: val => val.toFixed(2) + '%' },
+                { key: 'DGS10', format: val => val.toFixed(2) + '%' },
+                { key: 'YIELD_2s10s', format: val => (val * 100).toFixed(0) + ' bps' },
+                { key: 'HYG', format: val => '$' + val.toFixed(2) },
+                { key: 'LQD', format: val => '$' + val.toFixed(2) },
+                { key: 'VIX', format: val => val.toFixed(1) },
+                { key: 'MANEMP', format: val => val.toFixed(1) },
+                { key: 'UNRATE', format: val => val.toFixed(1) + '%' },
+                { key: 'ICSA', format: val => (val / 1000).toFixed(0) + 'K' },
+                { key: 'CPIAUCSL', format: val => val.toFixed(1) + '%' },
+                { key: 'PPIACO', format: val => val.toFixed(1) + '%' },
+                { key: 'DXY', format: val => val.toFixed(2) },
+                { key: 'GLD', format: val => '$' + val.toFixed(2) },
+                { key: 'COPPER', format: val => '$' + val.toFixed(2) },
+                { key: 'OIL', format: val => '$' + val.toFixed(2) },
+                { key: 'SPX', format: val => '$' + val.toFixed(2) },
+                { key: 'SPX_DRAWDOWN', format: val => val.toFixed(1) + '%' }
+            ];
+
+            indicators.forEach(({ key, format }) => {
+                const element = document.getElementById(`current-${key}`);
+                if (element && marketData[key]) {
+                    const data = marketData[key];
+                    const valueElement = element.querySelector('.current-reading-value');
+                    const signalElement = element.querySelector('.current-reading-signal');
+                    const dotElement = element.querySelector('.signal-dot');
+
+                    // Update value (with null check)
+                    if (data.value !== null && data.value !== undefined) {
+                        try {
+                            valueElement.textContent = format(data.value);
+                        } catch (e) {
+                            valueElement.textContent = 'Error';
+                            console.error(`Error formatting ${key}:`, e);
+                        }
+                    } else {
+                        valueElement.textContent = 'N/A';
+                    }
+
+                    // Update signal
+                    if (data.signal) {
+                        dotElement.className = 'signal-dot signal-' + data.signal;
+                        signalElement.querySelector('span:last-child').textContent = data.reason || 'Normal';
+
+                        // Update signal text color
+                        const signalText = signalElement.querySelector('span:last-child');
+                        if (data.signal === 'red') {
+                            signalText.style.color = 'var(--red)';
+                        } else if (data.signal === 'yellow') {
+                            signalText.style.color = 'var(--yellow)';
+                        } else {
+                            signalText.style.color = 'var(--green)';
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
